@@ -4,28 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Финансовый трекер</title>
-    <!-- 1. Подключаем Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- 2. Наши стили -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>➕ Добавить расход</h1>
-        <form id="expense-form">
-            <div class="form-group">
-                <label for="category">Категория</label>
-                <input type="text" id="category" placeholder="Например: Еда" required>
+        <!-- Вкладки -->
+        <div class="tabs">
+            <button id="tab-add" class="tab active">📝 Изменения</button>
+            <button id="tab-list" class="tab">📋 Транзакции</button>
+        </div>
+
+        <!-- Содержимое вкладки "Изменения" -->
+        <div id="panel-add" class="panel">
+            <h2>➕ Добавить операцию</h2>
+            <form id="transaction-form">
+                <div class="form-group">
+                    <label>Тип</label>
+                    <select id="type-select">
+                        <option value="expense">Расход</option>
+                        <option value="income">Доход</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="category">Категория</label>
+                    <input type="text" id="category" placeholder="Например: Еда" required>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Сумма (₽)</label>
+                    <input type="number" id="amount" placeholder="Например: 500" required>
+                </div>
+                <button type="submit" class="btn-primary">Добавить</button>
+            </form>
+            <div id="status-message"></div>
+        </div>
+
+        <!-- Содержимое вкладки "Транзакции" -->
+        <div id="panel-list" class="panel" style="display:none;">
+            <h2>📋 Все транзакции</h2>
+            <div id="transactions-list">
+                <p class="loading">Загрузка...</p>
             </div>
-            <div class="form-group">
-                <label for="amount">Сумма (₽)</label>
-                <input type="number" id="amount" placeholder="Например: 500" required>
-            </div>
-            <button type="submit" class="btn-primary">Добавить</button>
-        </form>
-        <div id="status-message"></div>
+        </div>
     </div>
-    <!-- 3. Наш скрипт -->
     <script src="app.js"></script>
 </body>
 </html>

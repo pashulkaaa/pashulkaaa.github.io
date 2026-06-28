@@ -1,58 +1,142 @@
-// Инициализируем приложение Telegram
 const tg = window.Telegram.WebApp;
-
-// Расширяем приложение на весь экран
 tg.expand();
 
-// Получаем элементы формы
-const form = document.getElementById('expense-form');
+// Получаем user_id из данных Telegram
+const user_id = tg.initDataUnsafe?.user?.id;
+if (!user_id) {
+    alert('Ошибка: не удалось определить пользователя.');
+}
+
+// Определяем базовый URL API (для локальной разработки используем localhost, для продакшена — ваш домен)
+// При локальном запуске app.py на порту 5000, используем http://localhost:5000
+// При деплое на PythonAnywhere — https://ваш_логин.pythonanywhere.com
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5000'
+    : 'https://pashulkaaa.pythonanywhere.com'; // Замените на ваш реальный адрес
+
+// DOM элементы
+const tabAdd = document.getElementById('tab-add');
+const tabList = document.getElementById('tab-list');
+const panelAdd = document.getElementById('panel-add');
+const panelList = document.getElementById('panel-list');
+const form = document.getElementById('transaction-form');
 const categoryInput = document.getElementById('category');
 const amountInput = document.getElementById('amount');
+const typeSelect = document.getElementById('type-select');
 const statusMessage = document.getElementById('status-message');
+const transactionsList = document.getElementById('transactions-list');
 
-// Функция для отображения статуса
+// Переключение вкладок
+tabAdd.addEventListener('click', () => {
+    tabAdd.classList.add('active');
+    tabList.classList.remove('active');
+    panelAdd.style.display = 'block';
+    panelList.style.display = 'none';
+});
+
+tabList.addEventListener('click', () => {
+    tabList.classList.add('active');
+    tabAdd.classList.remove('active');
+    panelAdd.style.display = 'none';
+    panelList.style.display = 'block';
+    loadTransactions();
+});
+
+// Функция показа статуса
 function showStatus(message, type = 'success') {
     statusMessage.textContent = message;
     statusMessage.className = type;
-    // Скрываем сообщение через 3 секунды
     setTimeout(() => {
         statusMessage.className = '';
         statusMessage.textContent = '';
-    }, 3000);
+    }, 4000);
 }
 
-// Обработчик отправки формы
-form.addEventListener('submit', function(event) {
-    event.preventDefault(); // Предотвращаем перезагрузку страницы
+// Отправка новой транзакции
+form.addEventListener('submit', async function(event) {
+    event.preventDefault();
 
+    const type = typeSelect.value;
     const category = categoryInput.value.trim();
     const amount = parseFloat(amountInput.value);
 
-    // Простая валидация
     if (!category) {
-        showStatus('Пожалуйста, введите категорию.', 'error');
+        showStatus('Введите категорию.', 'error');
         return;
     }
     if (isNaN(amount) || amount <= 0) {
-        showStatus('Пожалуйста, введите корректную сумму.', 'error');
+        showStatus('Введите корректную сумму.', 'error');
         return;
     }
 
-    // 1. Формируем данные для отправки
-    const data = {
-        type: 'expense', // Указываем, что это расход
-        category: category,
-        amount: amount
-    };
-
-    // 2. Отправляем данные боту через Telegram WebApp API
-    //    Бот получит их в поле message.web_app_data
+    // Отправляем данные через Telegram WebApp (для уведомления бота)
+    const data = { type, category, amount };
     tg.sendData(JSON.stringify(data));
 
-    // 3. Показываем сообщение об успехе и очищаем форму
-    showStatus(`Расход "${category}" на сумму ${amount} ₽ добавлен!`, 'success');
-    form.reset();
-
-    // 4. (Опционально) Закрываем Mini App через секунду
-    // setTimeout(() => tg.close(), 1500);
+    // Также отправляем через API, чтобы добавить в БД и сразу обновить список
+    try {
+        const response = await fetch(`${API_BASE}/api/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id, type, category, amount })
+        });
+        const result = await response.json();
+        if (result.status === 'ok') {
+            showStatus(`✅ ${type === 'income' ? 'Доход' : 'Расход'} "${category}" на сумму ${amount} ₽ добавлен!`, 'success');
+            form.reset();
+            // Если мы на вкладке "Транзакции", обновим список
+            if (panelList.style.display !== 'none') {
+                loadTransactions();
+            }
+        } else {
+            showStatus('Ошибка при добавлении.', 'error');
+        }
+    } catch (error) {
+        showStatus('Ошибка соединения с сервером.', 'error');
+        console.error(error);
+    }
 });
+
+// Загрузка списка транзакций
+async function loadTransactions() {
+    transactionsList.innerHTML = '<p class="loading">Загрузка...</p>';
+    try {
+        const response = await fetch(`${API_BASE}/api/transactions?user_id=${user_id}`);
+        if (!response.ok) throw new Error('Network error');
+        const transactions = await response.json();
+
+        if (transactions.length === 0) {
+            transactionsList.innerHTML = '<p class="loading">Пока нет транзакций.</p>';
+            return;
+        }
+
+        // Сортируем по дате (новые сверху)
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        let html = '';
+        transactions.forEach(t => {
+            const typeRu = t.type === 'income' ? 'Доход' : 'Расход';
+            const emoji = t.type === 'income' ? '💰' : '💸';
+            const amountClass = t.type === 'income' ? 'income' : 'expense';
+            const sign = t.type === 'income' ? '+' : '-';
+            html += `
+                <div class="transaction-item">
+                    <div class="left">
+                        <span class="category">${emoji} ${t.category}</span>
+                        <span class="date">${t.date.replace('T', ' ').slice(0, 16)}</span>
+                    </div>
+                    <span class="amount ${amountClass}">${sign}${t.amount.toFixed(2)} ₽</span>
+                </div>
+            `;
+        });
+        transactionsList.innerHTML = html;
+
+    } catch (error) {
+        transactionsList.innerHTML = '<p class="loading">Ошибка загрузки данных.</p>';
+        console.error(error);
+    }
+}
+
+const API_BASE = ''; // пустая строка = текущий хост
+// При открытии приложения показываем вкладку "Изменения" по умолчанию
+tabAdd.click();

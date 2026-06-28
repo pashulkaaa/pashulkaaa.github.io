@@ -8,24 +8,57 @@ body {
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background: var(--tg-theme-bg-color, #ffffff);
     color: var(--tg-theme-text-color, #000000);
-    padding: 20px;
-    display: flex;
-    justify-content: center;
+    padding: 16px;
     min-height: 100vh;
 }
 
 .container {
-    max-width: 400px;
-    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
-h1 {
-    font-size: 24px;
+/* Вкладки */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
+    padding-bottom: 8px;
+}
+
+.tab {
+    flex: 1;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    font-size: 16px;
     font-weight: 600;
-    margin-bottom: 24px;
-    color: var(--tg-theme-text-color, #000000);
+    color: var(--tg-theme-hint-color, #999999);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
 }
 
+.tab.active {
+    color: var(--tg-theme-button-color, #3390ec);
+    background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+}
+
+.tab:hover {
+    background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+}
+
+/* Панели */
+.panel {
+    display: block;
+}
+
+.panel h2 {
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+/* Форма */
 .form-group {
     margin-bottom: 16px;
 }
@@ -38,19 +71,18 @@ label {
     color: var(--tg-theme-hint-color, #999999);
 }
 
-input {
+input, select {
     width: 100%;
-    padding: 12px 16px;
+    padding: 12px 14px;
     font-size: 16px;
-    border: 1px solid var(--tg-theme-secondary-bg-color, #e0e0e0);
+    border: 1px solid var(--tg-theme-secondary-bg-color, #ddd);
     border-radius: 8px;
-    background: var(--tg-theme-secondary-bg-color, #f5f5f5);
-    color: var(--tg-theme-text-color, #000000);
+    background: var(--tg-theme-secondary-bg-color, #f7f7f7);
+    color: var(--tg-theme-text-color, #000);
     outline: none;
-    box-sizing: border-box;
 }
 
-input:focus {
+input:focus, select:focus {
     border-color: var(--tg-theme-button-color, #3390ec);
 }
 
@@ -62,7 +94,7 @@ input:focus {
     border: none;
     border-radius: 8px;
     background: var(--tg-theme-button-color, #3390ec);
-    color: var(--tg-theme-button-text-color, #ffffff);
+    color: var(--tg-theme-button-text-color, #fff);
     cursor: pointer;
     transition: opacity 0.2s;
     margin-top: 8px;
@@ -71,28 +103,70 @@ input:focus {
 .btn-primary:hover {
     opacity: 0.9;
 }
-
 .btn-primary:active {
     opacity: 0.7;
 }
 
 #status-message {
-    margin-top: 16px;
-    padding: 12px;
+    margin-top: 12px;
+    padding: 10px;
     border-radius: 8px;
     text-align: center;
-    font-size: 14px;
     display: none;
 }
-
 #status-message.success {
     display: block;
     background: #e6f7e6;
     color: #2e7d32;
 }
-
 #status-message.error {
     display: block;
     background: #fde8e8;
     color: #c62828;
+}
+
+/* Список транзакций */
+#transactions-list {
+    margin-top: 8px;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--tg-theme-secondary-bg-color, #eee);
+}
+
+.transaction-item .left {
+    display: flex;
+    flex-direction: column;
+}
+
+.transaction-item .category {
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.transaction-item .date {
+    font-size: 12px;
+    color: var(--tg-theme-hint-color, #999);
+}
+
+.transaction-item .amount {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.amount.income {
+    color: #2e7d32;
+}
+.amount.expense {
+    color: #c62828;
+}
+
+.loading {
+    text-align: center;
+    color: var(--tg-theme-hint-color, #999);
+    padding: 20px;
 }
