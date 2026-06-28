@@ -137,6 +137,6 @@ async function loadTransactions() {
     }
 }
 
-const API_BASE = ''; // пустая строка = текущий хост
+
 // При открытии приложения показываем вкладку "Изменения" по умолчанию
 tabAdd.click();
